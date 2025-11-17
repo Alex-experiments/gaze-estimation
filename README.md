@@ -1,5 +1,63 @@
 # MobileGaze: Pre-trained mobile nets for Gaze-Estimation
 
+## What's new?
+
+This forks of MobileGaze aims to create a MCP server that can estimate whether people on an image are facing the camera.
+
+To determine whether somebody's gaze is facing the camera, we use the predicted `pitch` and `yaw` angles, and check if the norm of the vector `(pitch, yaw)` is less than a certain threshold. This process is illustrated in the image below, with the left image being classified as `not facing camera`, and the right image as `facing camera`.
+
+<p align="center" width="100%">
+    <img width="100%" src="assets/vis.png">
+</p>
+
+After following the installation step of the initial repo (below), you can run the MCP server using the following command:
+`uv run fastmcp run server.py:mcp --transport http --host 0.0.0.0 --port <PORT>`
+
+**NOTE**: Make sure that you update the model's name inside `server.py` to the one you downloaded. (By default it uses `resnet34`)
+
+Here is a sample output obtained with the following script:
+```py
+import asyncio
+import base64
+from fastmcp import Client
+
+client = Client("http://localhost:<PORT>/mcp")
+
+
+async def call_tool():
+    async with client:
+        with open("path/to/image", "rb") as f:
+            image_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        result = await client.call_tool(
+            "estimate_front_facing_gazes", {"image_b64": image_b64}
+        )
+        print(result)
+
+if __name__ == "__main__":
+    asyncio.run(call_tool())
+
+```
+
+```py
+CallToolResult(
+    content=[
+        TextContent(
+            type="text",
+            text='{"num_faces":1,"all_faces_towards_cam":false}',
+            annotations=None,
+            meta=None,
+        )
+    ],
+    structured_content={"num_faces": 1, "all_faces_towards_cam": False},
+    meta=None,
+    data={"num_faces": 1, "all_faces_towards_cam": False},
+    is_error=False,
+)
+```
+
+
+# Original README
 ![Downloads](https://img.shields.io/github/downloads/yakhyo/gaze-estimation/total)
 [![GitHub Repo stars](https://img.shields.io/github/stars/yakhyo/gaze-estimation)](https://github.com/yakhyo/gaze-estimation/stargazers)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/yakhyo/gaze-estimation)
